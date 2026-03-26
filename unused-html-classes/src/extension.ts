@@ -19,7 +19,6 @@ export function activate(context: vscode.ExtensionContext) {
 
         const htmlText = editor.document.getText();
 
-        // Classi
         const classRegex = /class\s*=\s*"([^"]+)"/g;
         let match;
         const htmlClasses = new Set<string>();
@@ -28,7 +27,6 @@ export function activate(context: vscode.ExtensionContext) {
             classes.forEach(c => { if (c.trim() !== '') htmlClasses.add(c); });
         }
 
-        // ID
         const idRegex = /id\s*=\s*"([^"]+)"/g;
         let idMatch;
         const htmlIds = new Set<string>();
@@ -36,7 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
             htmlIds.add(idMatch[1].trim());
         }
 
-        // Cerca CSS solo nella cartella del file HTML aperto
         const htmlFileDir = path.dirname(editor.document.uri.fsPath);
         const htmlFileDirUri = vscode.Uri.file(htmlFileDir);
         const cssFiles = await vscode.workspace.findFiles(
@@ -67,7 +64,6 @@ export function activate(context: vscode.ExtensionContext) {
             ? vscode.workspace.workspaceFolders[0].uri.fsPath
             : '';
 
-        // Nessuna classe e nessun ID
         if (htmlClasses.size === 0 && htmlIds.size === 0) {
             output.appendLine("  There are no classes or IDs in this HTML file yet.");
             vscode.window.showInformationMessage('Class check complete! See the "HTML Class Checker" panel.');
@@ -81,7 +77,6 @@ export function activate(context: vscode.ExtensionContext) {
         const localIdGroups: { [filePath: string]: string[] } = {};
         const notFoundIds: string[] = [];
 
-        // Controlla classi
         htmlClasses.forEach(cls => {
             let foundLocal = false;
             let localFile = '';
@@ -109,7 +104,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
 
-        // Controlla ID
         htmlIds.forEach(id => {
             let foundLocal = false;
             let localFile = '';
@@ -133,7 +127,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
 
-        // Stampa classi solo se ce ne sono
         if (htmlClasses.size > 0) {
             output.appendLine("===== HTML CLASS CHECK =====");
             output.appendLine("");
@@ -177,7 +170,6 @@ export function activate(context: vscode.ExtensionContext) {
             output.appendLine("");
         }
 
-        // Stampa ID solo se ce ne sono
         if (htmlIds.size > 0) {
             output.appendLine("===== HTML ID CHECK =====");
             output.appendLine("");
