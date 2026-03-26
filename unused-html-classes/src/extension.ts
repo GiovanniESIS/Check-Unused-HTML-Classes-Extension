@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
         const htmlClasses = new Set<string>();
         while ((match = classRegex.exec(htmlText)) !== null) {
             const classes = match[1].split(/\s+/);
-            classes.forEach(c => htmlClasses.add(c));
+            classes.forEach(c => { if (c.trim() !== '') htmlClasses.add(c); });
         }
 
         // ID
@@ -36,7 +36,13 @@ export function activate(context: vscode.ExtensionContext) {
             htmlIds.add(idMatch[1].trim());
         }
 
-        const cssFiles = await vscode.workspace.findFiles('**/*.css');
+        // Cerca CSS solo nella cartella del file HTML aperto
+        const htmlFileDir = path.dirname(editor.document.uri.fsPath);
+        const htmlFileDirUri = vscode.Uri.file(htmlFileDir);
+        const cssFiles = await vscode.workspace.findFiles(
+            new vscode.RelativePattern(htmlFileDirUri, '**/*.css')
+        );
+
         const cssMap: { [key: string]: string } = {};
         for (const file of cssFiles) {
             const doc = await vscode.workspace.openTextDocument(file);
@@ -94,15 +100,12 @@ export function activate(context: vscode.ExtensionContext) {
             if (foundLocal) {
                 if (!localClassGroups[localFile]) localClassGroups[localFile] = { used: [], unused: [] };
                 localClassGroups[localFile].used.push(cls);
+            } else if (externalCssLinks.length > 0) {
+                const key = externalCssLinks.join(', ');
+                if (!externalClassGroups[key]) externalClassGroups[key] = { used: [], unused: [] };
+                externalClassGroups[key].used.push(cls);
             } else {
-                const isFontAwesome = /^(fa|fas|far|fal|fab|fad|fa-.+)$/.test(cls);
-                if (isFontAwesome && externalCssLinks.length > 0) {
-                    const key = externalCssLinks.join(', ');
-                    if (!externalClassGroups[key]) externalClassGroups[key] = { used: [], unused: [] };
-                    externalClassGroups[key].used.push(cls);
-                } else {
-                    notFoundClasses.push(cls);
-                }
+                notFoundClasses.push(cls);
             }
         });
 
